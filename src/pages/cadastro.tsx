@@ -1,51 +1,54 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Col, Container, Form, Row } from 'react-bootstrap'
 
-import { state, banks } from '../components/data'
+import { state, banks } from '../data'
 
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 
 import { api } from '../services'
+import { useDebounce } from '../hook/useDebounce'
 
 interface UserSubmitForm {
   nome: string
   rg: number
   cpf: string
   email: string
-  telefone: string
+  emailCorporativo: string
+  telefone1: string
+  telefone2: string
   nome_fantasia: string
   razao_social: string
   cnpj: string
   cep: string
   message: string
+  endereco: string
+  bairro: string
+  cidade: string
 }
 
 const validadationSchema = yup.object().shape({
-  nome: yup.string().required('Campo obrigatório!'),
-  rg: yup
-    .string()
-    .required('Campo obrigatório!')
-    .min(9, 'No mínimo 9 caracteres')
-    .max(9, 'No maximo 9 caracteres'),
-  cpf: yup.string().required('Campo obrigatório!'),
-  cep: yup.string().required('campo obrigatório!'),
-  email: yup.string().required('Campo obrigatório!').email('E-mail inválido'),
-  telefone: yup.string().required('Campo obrigatório!')
+  // nome: yup.string().required('Campo obrigatório!'),
+  // rg: yup
+  //   .string()
+  //   .required('Campo obrigatório!')
+  //   .min(9, 'No mínimo 9 caracteres')
+  //   .max(9, 'No maximo 9 caracteres'),
+  // cpf: yup.string().required('Campo obrigatório!'),
+  // cep: yup.string().required('campo obrigatório!'),
+  // email: yup.string().required('Campo obrigatório!').email('E-mail inválido'),
+  // telefone1: yup.string().required('Campo obrigatório!'),
+  // telefone2: yup.string().required('Campo obrigatório!')
 })
 
-const maskRg = (value) => {
-  return value.replace(/\s/g, "").match(/.{1,4}/g)?.join(" ").substr(0, 19) || ""
-}
-
 export default function Cadastro() {
-  
-  const { register, handleSubmit, formState } = useForm<UserSubmitForm>({
+
+  const { register, handleSubmit, formState, watch } = useForm<UserSubmitForm>({
     resolver: yupResolver(validadationSchema)
   })
 
-  console.log('REGISTER',register.name);
+  //console.log('REGISTER',register.name);
 
 
   const { errors } = formState
@@ -53,22 +56,35 @@ export default function Cadastro() {
 
   const handleForm: SubmitHandler<UserSubmitForm> = async (values) => {
     await new Promise(resolve => setTimeout(resolve, 2000))
-    console.log(values)
+    console.log('VALUE', values)
   }
 
-  const [address, setAddress] = useState({})
-
-
-
   const [disabled, setDisabled] = useState(true);
+  const { cep } = watch();
+  console.log('CEP', cep);
 
-  const [cep, setCep] = useState('');
+  //const debouncedChange = useDebounce(onchange, 2000)
+
+  //const [logradouro, setLogradouro] = useState('');
+  //const [bairro, setBairro] = useState('');
+  //const [localidade, setLocalidade] = useState('');
 
   const handleGetInputValue = async () => {
     const response = await api.get(`${cep}/json`)
-    const  data = await response.data 
-    console.log(data)
+    const data = await response.data
+    console.log('DATA HERE', data);
+    //setLogradouro(data.logradouro)
+    //setBairro(data.bairro)
+    //setLocalidade(data.localidade)    
   }
+
+  useEffect(() => {
+    if (cep) {
+      handleGetInputValue()
+    }
+  }, [cep])
+
+
 
   return (
     <>
@@ -77,7 +93,7 @@ export default function Cadastro() {
           <Col className="col-sm-12 col-md-6 mb-3 pb-2">
             <Form onSubmit={handleSubmit(handleForm)}>
               <div>
-                <h4>CADASTRE-SE</h4>              
+                <h4>CADASTRE-SE</h4>
               </div>
               <div className="mt-5 mb-5">
                 <div className="col-sm-12 col-md-6">
@@ -121,11 +137,11 @@ export default function Cadastro() {
               <div className="form-floating mb-3">
                 <input
                   type="email"
-                  name="email"
+                  name="emailCorporativo"
                   className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                   id="floatingInput"
                   placeholder="E-mail corporativo"
-                  {...register('email')}
+                  {...register('emailCorporativo')}
                 />
                 <p className="invalid-feedback">{errors.email?.message}</p>
                 <label htmlFor="floatingInput">E-mail corporativo</label>
@@ -133,18 +149,13 @@ export default function Cadastro() {
               <div className="form-floating mb-3">
                 <input
                   type="tel"
-                  name="telefone"
-                  className={`form-control ${errors.telefone ? 'is-invalid' : ''}`}
+                  name="telefone1"
+                  className={`form-control ${errors.telefone1 ? 'is-invalid' : ''}`}
                   id="floatingInput"
                   placeholder="Telefone"
-                  onChange={(event) => {
-                    const { value } = event.target
-                    console.log(maskRg(value));
-                    event.target.value = maskRg(value)
-                  }}
-                  {...register('telefone')}
+                  {...register('telefone1')}
                 />
-                <p className="invalid-feedback">{errors.telefone?.message}</p>
+                <p className="invalid-feedback">{errors.telefone1?.message}</p>
                 <label htmlFor="floatingInput">Telefone</label>
               </div>
               <div className="mt-5 mb-5">
@@ -203,13 +214,13 @@ export default function Cadastro() {
               <div className="form-floating mb-3">
                 <input
                   type="tel"
-                  name="telefone"
-                  className={`form-control ${errors.telefone ? 'is-invalid' : ''}`}
+                  name="telefone2"
+                  className={`form-control ${errors.telefone2 ? 'is-invalid' : ''}`}
                   id="floatingInput"
                   placeholder="Telefone"
-                  {...register('telefone')}
+                  {...register('telefone2')}
                 />
-                <p className="invalid-feedback">{errors.telefone?.message}</p>
+                <p className="invalid-feedback">{errors.telefone2?.message}</p>
                 <label htmlFor="floatingInput">Telefone</label>
               </div>
               <div className="mt-5 mb-5">
@@ -221,16 +232,13 @@ export default function Cadastro() {
               <div className="form-floating mb-3">
                 <input
                   type="text"
+                  name="cep"
                   className={`form-control ${errors.cep ? 'is-invalid' : ''}`}
-                  //className={`form-control`}
                   id="floatingInput"
                   placeholder="CEP"
                   {...register('cep')}
-                  value={cep}
-                  onChange={(e) => setCep(e.target.value)}
-                  onBlur={handleGetInputValue}
                 />
-                 <p className="invalid-feedback">{errors.cep?.message}</p>
+                <p className="invalid-feedback">{errors.cep?.message}</p>
                 <label htmlFor="floatingInput">CEP</label>
               </div>
               <Row className="justify-content-md-center mt-5">
@@ -241,7 +249,8 @@ export default function Cadastro() {
                       name="endereco"
                       className="form-control"
                       id="floatingInput"
-                      placeholder="Rua"                      
+                      placeholder="Rua"
+                      {...register('endereco')}
                     />
                     <label htmlFor="floatingInput">Rua</label>
                   </div>
@@ -266,6 +275,7 @@ export default function Cadastro() {
                   className="form-control"
                   id="floatingInput"
                   placeholder="Bairro"
+                  {...register('bairro')}
                 />
                 <label htmlFor="floatingInput">Bairro</label>
               </div>
@@ -276,6 +286,7 @@ export default function Cadastro() {
                   className="form-control"
                   id="floatingInput"
                   placeholder="Cidade"
+                  {...register('cidade')}
                 />
                 <label htmlFor="floatingInput">Cidade</label>
               </div>
